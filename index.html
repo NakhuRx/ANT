@@ -1,0 +1,239 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>วาร์ฟาริน – Warfarin Dose Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Serif:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{--ink:#12304a;--teal:#0fb5a6;--sky:#3b82f6;--sun:#ffb703;--coral:#ff6b6b;--bg:#effaf8;--mut:#5d7487}
+*{box-sizing:border-box}body{margin:0;font-family:Prompt,system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+header{background:linear-gradient(120deg,#0fb5a6,#3b82f6 70%,#8b5cf6);color:#fff;padding:22px 16px 56px}
+header h1{margin:0;font-size:26px;font-weight:600}header p{margin:4px 0 0;opacity:.9}
+main{max-width:980px;margin:-40px auto 40px;padding:0 12px}
+nav{display:flex;gap:6px;background:#fff;border-radius:40px;padding:5px;box-shadow:0 6px 20px #12304a1a;margin-bottom:14px;overflow:auto}
+nav button{flex:1;border:0;background:none;padding:10px 14px;border-radius:30px;font:inherit;font-weight:500;color:var(--mut);cursor:pointer;white-space:nowrap}
+nav button.on{background:linear-gradient(120deg,var(--teal),var(--sky));color:#fff}
+.tab{display:none}.tab.on{display:block}
+.card{background:#fff;border-radius:20px;padding:18px;margin-bottom:14px;box-shadow:0 4px 16px #12304a14}
+.card h2{margin:0 0 12px;font-size:17px;display:flex;align-items:center;gap:8px}.card h2:before{content:"";width:8px;height:20px;border-radius:4px;background:var(--c,var(--teal))}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+label{display:block;font-size:13px;color:var(--mut);margin-bottom:4px}
+input,select,textarea{width:100%;font:inherit;padding:9px 11px;border:2px solid #dbe9ef;border-radius:12px;background:#fbfeff;color:var(--ink)}
+input:focus,select:focus{outline:0;border-color:var(--sky)}input[type=checkbox],input[type=radio]{width:auto;accent-color:var(--teal)}
+.ck{display:inline-flex;align-items:center;gap:6px;margin:3px 12px 3px 0;color:var(--ink);font-size:14px}
+.btn{border:0;font:inherit;font-weight:600;padding:11px 20px;border-radius:14px;color:#fff;background:linear-gradient(120deg,var(--teal),var(--sky));cursor:pointer;box-shadow:0 4px 12px #3b82f64d}
+.btn.o{background:linear-gradient(120deg,var(--sun),var(--coral))}.btn.w{background:#fff;color:var(--ink);border:2px solid #dbe9ef;box-shadow:none}
+.res{display:none}.res.on{display:block}
+.rb{background:linear-gradient(120deg,#e0f7f4,#e6efff);border-radius:14px;padding:12px 14px;font-weight:600}
+.rg{border:2px solid #dbe9ef;border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer;display:flex;gap:10px}
+.rg.on{border-color:var(--teal);background:#effcfa}.rg small{color:var(--mut);display:block}
+.chip{display:inline-block;padding:5px 11px;margin:3px;border-radius:20px;border:2px solid #dbe9ef;cursor:pointer;font-size:13px;user-select:none}.chip.on{background:var(--sun);border-color:var(--sun);font-weight:600}
+table{border-collapse:collapse;width:100%}th,td{padding:7px 8px;border-bottom:1px solid #e4eef3;text-align:left;font-size:14px}th{background:#f1f8fb}
+.cal{table-layout:fixed;margin-bottom:12px}.cal th,.cal td{text-align:center;border:1px solid #e4eef3;padding:4px;height:50px;vertical-align:top}.cal i{display:block;font-size:11px;color:var(--mut);font-style:normal;text-align:left}
+.cal td.n{background:#e6f9f6}.cal td.o{background:#fff3d6}.cal td.x{background:#f7f9fa}.cal td.st{outline:3px solid var(--sky);outline-offset:-3px}.cal td.ap{outline:3px solid var(--coral);outline-offset:-3px}
+.cal b{font-size:16px}.cal small{font-size:10px;color:var(--mut)}.cm>b{font-size:16px}.cm>span{color:var(--mut);font-size:13px;margin-left:8px}
+.note{border:2px dashed #b8d4e0;border-radius:14px;padding:14px;background:#fcfeff;line-height:1.7}
+canvas#stk,canvas#stk2{width:100%;max-width:540px;border:2px solid #dbe9ef;border-radius:8px;background:#fff}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:12px}.kp div{background:#f1f8fb;border-radius:14px;padding:10px;text-align:center}.kp b{font-size:24px;display:block}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}pre{background:#12304a;color:#d6ecff;padding:12px;border-radius:12px;overflow:auto;font-size:12px}
+@media(max-width:600px){.cal th,.cal td{height:44px;padding:2px}.cal b{font-size:13px}}
+</style></head><body>
+<div id="bn" style="display:none;position:sticky;top:0;z-index:9;background:linear-gradient(120deg,#ffb703,#ff6b6b);color:#fff;padding:10px 14px;text-align:center;font-weight:600">⏰ 15:30 – บันทึกสรุปวันนี้ จำนวนผู้ป่วยทั้งหมด <input id="bt" type="number" min="0" style="width:90px;display:inline-block;padding:4px 8px"> <button class="btn w" id="bs" style="padding:6px 14px">บันทึก</button> <button class="btn w" id="bx" style="padding:6px 12px">ไว้ทีหลัง</button></div><header><h1>💊 วาร์ฟาริน</h1><p>ผู้ช่วยเภสัชกรรมคลินิก – ปรับขนาดยา Warfarin ตามค่า INR · ผลลัพธ์ใช้ประกอบการตัดสินใจของผู้สั่งใช้ยาเท่านั้น</p></header>
+<main>
+<nav><button class="on" data-t="t1">คำนวณ</button><button data-t="t2">ประวัติผู้ป่วย</button><button data-t="t3">Dashboard รายสัปดาห์</button><button data-t="t4">ตั้งค่า / Sheet</button></nav>
+
+<section class="tab on" id="t1">
+<div class="card"><h2>ข้อมูลผู้ป่วย</h2><div class="g">
+<div><label>HN</label><input id="hn" placeholder="เช่น 5031"></div>
+<div><label>เป้าหมาย INR</label><select id="tg"><option value="l">2.0 – 3.0</option><option value="h">2.5 – 3.5</option></select></div>
+<div><label>INR ปัจจุบัน</label><input id="inr" type="number" step="0.01" placeholder="1.91"></div>
+<div><label>ขนาดยาเดิม (mg/สัปดาห์)</label><input id="od" type="number" step="0.25" placeholder="22.5"></div></div>
+<div style="margin-top:8px"><label class="ck"><input type="checkbox" id="bl"> Major bleeding</label></div>
+<div class="bar"><button class="btn" id="go">คำนวณ</button><span style="color:var(--mut);align-self:center" id="sd"></span></div></div>
+
+<div class="res" id="R">
+<div class="card" style="--c:var(--sky)"><h2>คำแนะนำการปรับยา</h2><div class="rb" id="rt"></div>
+<div id="slw" style="margin-top:12px"><label>เลือกเปอร์เซ็นต์ที่ปรับ: <b id="slv"></b></label><input type="range" id="sl" step="0.5"></div>
+<div style="margin-top:10px"><label class="ck"><input type="checkbox" id="na"> ยังไม่ต้องปรับยา เนื่องจาก</label>
+<span id="nr"><label class="ck"><input type="checkbox" value="Compliance"> Compliance</label><label class="ck"><input type="checkbox" value="Drug interaction"> Drug interaction</label><label class="ck"><input type="checkbox" value="Food interaction"> Food interaction</label><input id="nx" placeholder="อื่นๆ (พิมพ์เอง)" style="margin-top:6px"></span></div>
+<div class="g" style="margin-top:10px"><div><label>ขนาดยาใหม่ที่ต้องการ (mg/สัปดาห์) – แก้ไขได้</label><input id="nd" type="number" step="0.25"></div><div><label>เปลี่ยนแปลงตามเป้า</label><div class="rb" id="pc">–</div></div></div></div>
+
+<div class="card" style="--c:var(--sun)"><h2>ปัจจัยที่อาจมีผลต่อ INR (ไม่บังคับ)</h2><div id="fc"></div></div>
+
+<div class="card" style="--c:var(--coral)"><h2>จัดสูตรยา (จันทร์–อาทิตย์)</h2>
+<div><label class="ck"><input type="checkbox" id="c3" checked> เม็ด 3 mg</label><label class="ck"><input type="checkbox" id="c5" checked> เม็ด 5 mg</label><label class="ck"><input type="checkbox" id="h" checked> หักครึ่งได้</label><label class="ck"><input type="checkbox" id="q"> แบ่ง ¼ ได้</label></div>
+<div id="rg" style="margin-top:10px"></div><div id="cw">วันที่ขนาดยาต่างจากวันอื่น (สำหรับ “กำหนดเอง”): <span id="chips"></span></div></div>
+
+<div class="card" style="--c:#8b5cf6"><h2>จำนวนยาที่ต้องจ่าย</h2><div class="g"><div><label>วันนัด (นับจากวันที่กดคำนวณ)</label><input type="date" id="ap"></div><div><label>จำนวนวัน</label><div class="rb" id="dy">–</div></div></div><div id="dsp" style="margin-top:10px"></div></div>
+
+<div class="card"><h2>ปฏิทินการกินยา</h2><div id="cal"></div></div>
+
+<div class="card" style="--c:var(--sky)"><h2>Pharmacist note</h2><div class="note" id="note"></div>
+<div class="bar"><button class="btn" id="cp">คัดลอก</button><button class="btn o" id="sv">บันทึกผู้ป่วย</button></div></div>
+
+<div class="card" style="--c:var(--teal)"><h2>ตั้งค่ารูปสติกเกอร์</h2><label>ระยะขอบเพิ่ม (ใช้กับการพิมพ์และดาวน์โหลดรูป ป้องกันตกขอบ)</label><select id="mg" style="max-width:260px"><option value="0">ไม่เพิ่มขอบ (ขนาดเต็ม)</option><option value="2">เพิ่มขอบ 2 mm</option><option value="3" selected>เพิ่มขอบ 3 mm</option><option value="4">เพิ่มขอบ 4 mm</option><option value="5">เพิ่มขอบ 5 mm</option></select></div>
+<div class="card" style="--c:var(--coral)"><h2>สติกเกอร์ที่ 1: Pharmacist note (9 × 7 cm)</h2><canvas id="stk"></canvas><div class="bar"><button class="btn o" id="ps">พิมพ์ / บันทึก PDF</button><button class="btn w" id="dl">ดาวน์โหลดรูป PNG</button></div></div>
+<div class="card" style="--c:var(--sun)"><h2>สติกเกอร์ที่ 2: ตารางการกินยา (9 × 7 cm)</h2><canvas id="stk2"></canvas><div class="bar"><button class="btn o" id="ps2">พิมพ์ / บันทึก PDF</button><button class="btn w" id="dl2">ดาวน์โหลดรูป PNG</button><button class="btn" id="ps3">พิมพ์ทั้ง 2 ใบ</button></div></div>
+</div>
+</div></section>
+
+<section class="tab" id="t2"><div class="card"><h2>ประวัติผู้ป่วย</h2><div class="g"><div><label>ค้นหา HN</label><input id="fh" placeholder="HN"></div></div><div style="height:240px;margin:12px 0"><canvas id="hc"></canvas></div><div style="overflow:auto"><table id="ht"></table></div></div></section>
+
+<section class="tab" id="t3"><div class="card" style="--c:var(--sun)"><h2>บันทึกสรุปประจำวัน</h2><div class="g"><div><label>วันที่</label><input type="date" id="sdd"></div><div><label>จำนวนผู้ป่วยทั้งหมดของวันนั้น (รวมผู้ป่วย INR ปกติที่ไม่ได้ลงในแอป)</label><input type="number" id="sdt" min="0"></div><div style="align-self:end"><button class="btn" id="sds">บันทึกสรุป</button></div></div></div>
+<div class="card" style="--c:var(--sky)"><h2>Dashboard</h2><div class="g"><div><label>ช่วงเวลา</label><select id="pm"><option value="w">รายสัปดาห์</option><option value="m">รายเดือน</option><option value="y">รายปี</option></select></div><div><label>เลือกวันที่ (ระบบหาสัปดาห์/เดือน/ปีที่ครอบคลุม)</label><input type="date" id="wk"></div><div><label>ช่วงที่แสดง</label><div class="rb" id="pr">–</div></div></div>
+<div class="kp" id="kp" style="margin-top:12px"></div><div style="height:240px"><canvas id="wc"></canvas></div></div>
+<div class="card" style="--c:var(--coral)"><h2>สาเหตุที่พบบ่อย</h2><div class="g"><div><b>INR ต่ำกว่าเป้า</b><table id="cl"></table></div><div><b>INR สูงกว่าเป้า</b><table id="ch"></table></div></div></div></section>
+
+<section class="tab" id="t4"><div class="card"><h2>เชื่อม Google Apps Script</h2><label>Web App URL</label><input id="url" placeholder="https://script.google.com/macros/s/.../exec"><div class="bar"><button class="btn" id="su">บันทึก URL</button><button class="btn w" id="pl">ดึงข้อมูลจาก Sheet</button></div>
+<p style="color:var(--mut)">ข้อมูลเก็บในเครื่องเสมอ และส่งไป Sheet อัตโนมัติเมื่อกดบันทึกผู้ป่วย / จำนวนรายสัปดาห์ (สร้าง Google Sheet → Extensions → Apps Script → วางโค้ดด้านล่าง → Deploy เป็น Web app, Anyone)</p>
+<pre id="gs">function sh(n){var s=SpreadsheetApp.getActiveSpreadsheet();return s.getSheetByName(n)||s.insertSheet(n)}
+function doPost(e){var d=JSON.parse(e.postData.contents),w=d.type=='day',s=sh(w?'Days':'Records'),k=(w?'d':'r')+d.key,v=s.getDataRange().getValues(),r=-1;
+for(var i=0;i&lt;v.length;i++)if(v[i][0]==k){r=i+1;break}
+var x=w?[k,JSON.stringify(d.data),d.data.date,d.data.total]:[k,JSON.stringify(d.data),d.data.date,d.data.hn,d.data.inr,d.data.newDose];
+if(r>0)s.getRange(r,1,1,x.length).setValues([x]);else s.appendRow(x);return ContentService.createTextOutput('ok')}
+function doGet(e){var p=function(n){return sh(n).getDataRange().getValues().filter(function(x){return x[0]}).map(function(x){return JSON.parse(x[1])})};
+return ContentService.createTextOutput(JSON.stringify({records:p('Records'),days:p('Days')})).setMimeType(ContentService.MimeType.JSON)}</pre>
+<button class="btn w" id="cg">คัดลอกโค้ด</button></div></section>
+</main>
+<script>
+const g=id=>document.getElementById(id),DN=['จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์','อาทิตย์'],DS=['จ','อ','พ','พฤ','ศ','ส','อา'],TM=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const fr=n=>{const w=Math.floor(n+1e-9),f=Math.round((n-w)*4);return(w||(f?'':'0'))+['','¼','½','¾'][f]};
+const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),pd=s=>new Date(s+'T00:00:00'),th=d=>d.getDate()+'/'+(d.getMonth()+1)+'/'+(d.getFullYear()+543),wd=d=>(d.getDay()+6)%7,add=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const mon=d=>add(d,-wd(d)),LS=(k,v)=>v===undefined?JSON.parse(localStorage.getItem(k)||'null'):localStorage.setItem(k,JSON.stringify(v));
+let S={calc:false,manual:false,sel:0,odd:[6],start:null,sh:null};
+const FC=[['comp','Compliance','กินยาสม่ำเสมอตามแพทย์สั่ง','ไม่สม่ำเสมอ เช่น ลืม/กินผิดขนาด'],['herb','สมุนไพร/อาหารเสริม','ปฏิเสธ','เช่น นมถั่วเหลือง, กระเทียม, ขิง'],['drug','ยาอื่นที่ใช้ร่วม','ปฏิเสธ','ชื่อยา/ยาจากที่อื่น'],['food','การเปลี่ยนแปลงอาหาร/พฤติกรรม','ปฏิเสธ','เช่น กินผักใบเขียวมากขึ้น, ดื่มแอลกอฮอล์']];
+const HB={'นมถั่วเหลือง':'d','โสม':'d','ชาเขียว':'d','ผักใบเขียว':'d','กระเทียม':'u','ขิง':'u','ขมิ้น':'u','แปะก๊วย':'u','น้ำมันปลา':'u','เห็ดหลินจือ':'u','ดอกคำฝอย':'u'};
+g('fc').innerHTML=FC.map(([k,l,dn,ph])=>`<div style="margin-bottom:10px"><b>${l}</b><div class="g" style="grid-template-columns:1fr 2fr 1fr;align-items:end"><label class="ck"><input type="checkbox" id="d_${k}"> ${dn} <small>(พิมพ์ลงสติกเกอร์)</small></label><input id="x_${k}" placeholder="${ph}"><select id="r_${k}"><option value="">ผลต่อ INR: ไม่ระบุ</option><option value="u">↑ เพิ่ม INR</option><option value="d">↓ ลด INR</option></select></div></div>`).join('');
+g('x_herb').addEventListener('input',e=>{for(const k in HB)if(e.target.value.includes(k)&&!g('r_herb').value)g('r_herb').value=HB[k]});
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button,.tab').forEach(x=>x.classList.remove('on'));b.classList.add('on');g(b.dataset.t).classList.add('on');if(b.dataset.t=='t2')hist();if(b.dataset.t=='t3')dash()});
+const tg=()=>g('tg').value=='h'?'2.5 – 3.5':'2 – 3',R4=x=>Math.round(x*4)/4;
+function rec(){const inr=+g('inr').value,t=g('tg').value=='h'?[1.9,2.5,3.5,4.6]:[1.5,2,3,4],o={min:0,max:0,s:1,lo:0,hi:0};
+ if(g('bl').checked)return{...o,bl:1,t:'Major bleeding: Vitamin K 10 mg IV + FFP'};
+ if(inr<t[0])return{...o,min:10,max:20,t:'เพิ่มขนาดยา 10 – 20%',lo:1};
+ if(inr<t[1])return{...o,min:5,max:10,t:'เพิ่มขนาดยา 5 – 10%',lo:1};
+ if(inr<=t[2])return{...o,t:'ใช้ขนาดเดิม (0%)'};
+ if(inr<t[3])return{...o,min:5,max:10,s:-1,t:'ลดขนาดยา 5 – 10%',hi:1};
+ if(inr<5)return{...o,min:10,max:10,s:-1,t:'Hold 1 วัน + ลดขนาดยา 10%',hi:1};
+ if(inr<9)return{...o,min:10,max:10,s:-1,t:'Omit 1–2 doses + Vitamin K 1 mg orally + ลดขนาดยา 10%',hi:1};
+ return{...o,min:10,max:10,s:-1,t:'Vitamin K 5 – 10 mg orally + ลดขนาดยา 10%',hi:1}}
+const step=()=>g('q').checked?.25:g('h').checked?.5:1;
+function pf(d){const s=step();let b=null;for(let a=0;a*3<=d+1e-9;a+=s){if(a>0&&!g('c3').checked)break;const r=d-a*3;let c=0;if(g('c5').checked){c=r/5;if(Math.abs(c/s-Math.round(c/s))>1e-6)continue}else if(r>1e-6)continue;const k=(a+c)/s;if(!b||k<b.c)b={n3:a,n5:c,c:k}}return b}
+const pt=d=>{const p=pf(d);if(!p)return'–';return[[3,p.n3],[5,p.n5]].filter(x=>x[1]>0).map(x=>`${x[0]} mg ${fr(x[1])} เม็ด`).join(' + ')};
+function doses(){const D=[];for(let d=.25;d<=15;d+=.25){const p=pf(d);if(p)D.push({d,c:p.c})}return D}
+function mk(T,odd){const D=doses(),k=odd.length;let b=null;if(!D.length)return null;
+ if(!k){D.forEach(x=>{const sc=Math.abs(7*x.d-T)*1000+x.c*7;if(!b||sc<b.sc)b={a:x.d,b:x.d,odd:[],sc,tot:7*x.d}});return b}
+ D.forEach(x=>D.forEach(y=>{if(x.d==y.d)return;const tot=(7-k)*x.d+k*y.d,sc=Math.abs(tot-T)*1000+Math.abs(x.d-y.d)*5+x.c*(7-k)+y.c*k;if(!b||sc<b.sc)b={a:x.d,b:y.d,odd,sc,tot}}));return b}
+const dd=(r,w)=>r.odd.includes(w)?r.b:r.a;
+function lab(l,sp){sp=sp||'–';if(l.length==7)return'ทุกวัน';l=[...l].sort((a,b)=>a-b);const o=[];let s=l[0],p=s;for(let i=1;i<=l.length;i++){if(l[i]==p+1){p=l[i];continue}o.push(s==p?'วัน'+DN[s]:DN[s]+sp+DN[p]);s=l[i];p=s}return o.join(', ')}
+function sig(r){const A=[0,1,2,3,4,5,6].filter(w=>!r.odd.includes(w)),L=[`warfarin ${pt(r.a)} ก่อนนอน ${lab(A)}`];if(r.odd.length)L.push(`${pt(r.b)} ก่อนนอน ${lab(r.odd)}`);return L}
+const PRE=[[],[6],[5,6],[0,2,4]],PL=['กินเท่ากันทุกวัน (ใกล้เคียงที่สุด)','วันอาทิตย์ต่างจากวันอื่น','เสาร์–อาทิตย์ต่างจากวันอื่น','จันทร์/พุธ/ศุกร์ต่างจากวันอื่น','กำหนดเอง'];
+const fl=k=>{const x=g('x_'+k).value.trim(),d=g('r_'+k).value;if(x)return(k=='comp'?'Compliance: ':FC.find(f=>f[0]==k)[1]+': ')+x+(d?' — มีแนวโน้ม'+(d=='u'?'เพิ่ม':'ลด')+' INR':'');if(g('d_'+k).checked)return k=='comp'?'Compliance: กินยาสม่ำเสมอตามแพทย์สั่ง':FC.find(f=>f[0]==k)[1]+': ปฏิเสธ';return null};
+const nrs=()=>[...document.querySelectorAll('#nr input[type=checkbox]:checked')].map(x=>x.value).concat(g('nx').value.trim()?[g('nx').value.trim()]:[]).join(', ');
+function render(){if(!S.calc)return;
+ const old=+g('od').value,r=rec(),sl=g('sl');S.r=r;g('rt').textContent=r.t;
+ if(sl.dataset.k!=r.t){sl.min=r.min;sl.max=r.max;sl.value=(r.min+r.max)/2;sl.dataset.k=r.t}
+ const adj=!g('na').checked&&!r.bl;g('slw').style.display=adj&&r.min!=r.max?'block':'none';g('slv').textContent=sl.value+'%';
+ g('nr').style.display=g('na').checked?'inline':'none';
+ const p=adj?(r.min==r.max?r.min:+sl.value)*r.s:0;S.p=p;
+ if(!S.manual)g('nd').value=R4(old*(1+p/100));
+ const T=+g('nd').value;g('pc').textContent=old?`${(T-old>=0?'▲ ':'▼ ')+Math.abs((T-old)/old*100).toFixed(2)}%  (${old} → ${T} mg/สัปดาห์)`:'–';
+ const rs=[...PRE,S.odd].map(o=>mk(T,o));
+ g('rg').innerHTML=rs.map((x,i)=>x?`<div class="rg ${i==S.sel?'on':''}" data-i="${i}"><input type="radio" ${i==S.sel?'checked':''}><div><b>${PL[i]}</b>${sig(x).map(s=>`<small>${s}</small>`).join('')}<small>รวม ${fr(x.tot)} mg/สัปดาห์ (ต่างจากเป้า ${x.tot-T>=0?'+':''}${+(x.tot-T).toFixed(2)})</small></div></div>`:'').join('')||'<i>ไม่สามารถจัดสูตรด้วยเม็ดที่เลือกได้</i>';
+ g('rg').querySelectorAll('.rg').forEach(e=>e.onclick=()=>{S.sel=+e.dataset.i;render()});
+ g('cw').style.display=S.sel==4?'block':'none';g('chips').innerHTML=DN.map((n,i)=>`<span class="chip ${S.odd.includes(i)?'on':''}" data-i="${i}">${n}</span>`).join('');
+ g('chips').querySelectorAll('.chip').forEach(e=>e.onclick=()=>{const i=+e.dataset.i;S.odd=S.odd.includes(i)?S.odd.filter(x=>x!=i):[...S.odd,i];render()});
+ const X=rs[S.sel];S.X=X;if(!X)return;
+ const apd=g('ap').value?pd(g('ap').value):add(S.start,28);let days=Math.round((apd-S.start)/864e5);if(days<1)days=28;S.days=days;
+ let n3=0,n5=0,cnt={};for(let i=0;i<days;i++){const w=wd(add(S.start,i)),d=dd(X,w),q=pf(d)||{n3:0,n5:0};n3+=q.n3;n5+=q.n5;cnt[d]=(cnt[d]||0)+1}
+ g('dy').textContent=`${days} วัน (${th(S.start)} – ${th(add(S.start,days-1))})`;
+ g('dsp').innerHTML=`<table><tr><th>ขนาดเม็ด</th><th>เบิก (เม็ด)</th><th>ใช้จริง</th></tr>${n3?`<tr><td>3 mg</td><td><b>${Math.ceil(n3-1e-9)}</b></td><td>${fr(n3)}</td></tr>`:''}${n5?`<tr><td>5 mg</td><td><b>${Math.ceil(n5-1e-9)}</b></td><td>${fr(n5)}</td></tr>`:''}</table><small>${Object.keys(cnt).map(d=>`${fr(+d)} mg × ${cnt[d]} วัน`).join(' · ')}</small>`;
+ g('cal').innerHTML=cal(X,S.start,days,apd);
+ const I=info();g('note').innerHTML=nhtml(I);S.I=I;sticker();}
+function info(){const X=S.X,old=+g('od').value,tot=X.tot,r=S.r,na=g('na').checked,ch=old?(tot-old)/old*100:0,F=FC.map(f=>fl(f[0])).filter(Boolean);
+ return{start:S.start,date:th(S.start),hn:g('hn').value.trim(),tg:tg(),inr:g('inr').value,rec:r.bl?r.t:na?'ยังไม่ต้องปรับยา'+(nrs()?' เนื่องจาก '+nrs():''):r.t,F,old,nw:tot,ch,na,sig:sig(X),X,r}}
+const chs=I=>(I.ch>=0?'▲ ':'▼ ')+Math.abs(I.ch).toFixed(2)+'%';
+function nhtml(I){const dl=I.na||I.r.bl?`ขนาดยา: ${I.old} มก./สัปดาห์ (คงเดิม)`:`ขนาดยาเดิม: ${I.old} มก./สัปดาห์<br>ขนาดยาใหม่: ${fr(I.nw)} มก./สัปดาห์ (เปลี่ยนแปลงจริง ${chs(I)})`;
+ return`<b>PHARMACIST NOTE — Warfarin Dose Adjustment</b><br>วันที่บันทึก: ${I.date}${I.hn?'<br>HN: '+I.hn:''}<br>เป้าหมาย INR: ${I.tg}<br>INR ปัจจุบัน: ${I.inr}<br>คำแนะนำ: ${I.rec}<br>${I.F.length?'ปัจจัยที่อาจมีผลต่อค่า INR:<br>'+I.F.map(f=>'&nbsp;&nbsp;'+f).join('<br>')+'<br>':''}${dl}<br><table style="margin:8px 0"><tr>${DS.map(d=>`<th>${d}</th>`).join('')}</tr><tr>${[0,1,2,3,4,5,6].map(w=>`<td>${fr(dd(I.X,w))} mg<br><small>${pt(dd(I.X,w))}</small></td>`).join('')}</tr></table>${I.sig.join('<br>')}<br>เรียนแพทย์พิจารณา ขอบคุณค่ะ/ครับ`}
+const ntxt=()=>g('note').innerText;
+function cal(X,st,days,apd){let h='';const end=add(st,days-1);let m=new Date(st.getFullYear(),st.getMonth(),1);
+ while(m<=end){const y=m.getFullYear(),mo=m.getMonth(),n=new Date(y,mo+1,0).getDate(),off=wd(m);
+  h+=`<div class="cm"><b>${TM[mo]} ${y+543}</b><span>เป้าหมาย INR ${tg()} · ขนาดยารวม ${fr(X.tot)} mg/สัปดาห์</span><table class="cal"><tr>${DS.map(d=>`<th>${d}</th>`).join('')}</tr><tr>`;
+  for(let i=0;i<off;i++)h+='<td></td>';
+  for(let d=1;d<=n;d++){const dt=new Date(y,mo,d),w=wd(dt),ok=dt>=st&&dt<=end;h+=`<td class="${ok?(X.odd.includes(w)?'o':'n'):'x'}${+dt==+st?' st':''}${+dt==+apd?' ap':''}"><i>${d}${+dt==+apd?' นัด':''}</i>${ok?`<b>${fr(dd(X,w))}</b><small> mg</small>`:''}</td>`;if((off+d)%7==0&&d<n)h+='</tr><tr>'}
+  h+='</tr></table></div>';m=new Date(y,mo+1,1)}return h}
+/* sticker */
+const SW=2046,SH=1590,SERIF="'Noto Serif',Georgia,serif",SANS="Prompt,sans-serif",COL={3:'#e0a458',5:'#ff8fab'};
+function wrapF(c,t,w1,w){const o=[];let l='',m=w1;for(const ch of t){if(c.measureText(l+ch).width>m&&l){o.push(l);l=ch==' '?'':ch;m=w}else l+=ch}o.push(l);return o}
+function pieces(d){const p=pf(d)||{n3:0,n5:0},o=[];[[3,p.n3],[5,p.n5]].forEach(([m,n])=>{while(n>1e-9){const f=Math.min(1,n);o.push([m,f]);n-=f}});return o}
+const pts=d=>{const p=pf(d);return p?[[3,p.n3],[5,p.n5]].filter(x=>x[1]>0).map(x=>`${x[0]} มก. ${fr(x[1])} เม็ด`).join(' + ')+' รับประทานก่อนนอน':'–'};
+function groups(X){const A=[0,1,2,3,4,5,6].filter(w=>!X.odd.includes(w)),G=[[lab(A,'-'),X.a]];if(X.odd.length)G.push([lab(X.odd,'-'),X.b]);return G}
+function stkRows(I){const R=[{s:[['HN: ',I.hn||'-'],['     วันที่: ',I.date]]},{s:[['เป้าหมาย INR: ',I.tg],['     INR ปัจจุบัน: ',I.inr]]},{s:[['คำแนะนำ: ',I.rec]]}];
+ const cp=g('x_comp').value.trim()||(g('d_comp').checked?'สม่ำเสมอ':'');if(cp)R.push({s:[['Compliance: ',cp]]});
+ const dn=[],it=[];['herb','drug','food'].forEach(k=>{const x=g('x_'+k).value.trim(),d=g('r_'+k).value,l=FC.find(f=>f[0]==k)[1];if(x)it.push(l+': '+x+(d?' (มีแนวโน้ม'+(d=='u'?'เพิ่ม':'ลด')+' INR)':''));else if(g('d_'+k).checked)dn.push(k)});
+ const nm=dn.filter(k=>k!='food').map(k=>k=='herb'?'สมุนไพร/อาหารเสริม':'ยาจากที่อื่น'),pa=[];if(nm.length)pa.push('ปฏิเสธการใช้'+nm.join('/'));if(dn.includes('food'))pa.push('ไม่มีการเปลี่ยนแปลงอาหาร/พฤติกรรม');pa.push(...it);
+ if(pa.length)R.push({s:[['ปัจจัยที่มีผลต่อ INR: ',pa.join('; ')]]});
+ R.push({s:[['ขนาดยา: ',I.na||I.r.bl?`${I.old} มก./สัปดาห์ (คงเดิม)`:`${I.old} → ${fr(I.nw)} มก./สัปดาห์ (${I.ch>=0?'▲':'▼'}${Math.abs(I.ch).toFixed(1)}%)`]]});return R}
+async function sticker(){try{await Promise.all(['700 40px "Noto Serif"','600 30px Prompt','400 30px Prompt','700 30px Prompt'].map(f=>document.fonts.load(f)))}catch(e){}
+ const I=S.I;if(!I)return;stkNote(I);stkTab(I)}
+function stkNote(I){const cv=g('stk'),c=cv.getContext('2d');cv.width=SW;cv.height=SH;const k=SW/2048,M=92*k,rows=stkRows(I),G=groups(I.X);
+ const F=(w,s,f)=>c.font=`${w} ${s}px ${f||SANS}`;
+ const lay=(fs,dr)=>{const LH=fs*1.5;let y=232*k;const ds=yy=>{if(dr){c.setLineDash([22*k,16*k]);c.lineWidth=5*k;c.beginPath();c.moveTo(M,yy);c.lineTo(SW-M,yy);c.stroke();c.setLineDash([])}};
+  rows.forEach(r=>{y+=LH;if(r.s.length>1){let x=M;r.s.forEach(([l,v])=>{F(600,fs);if(dr)c.fillText(l,x,y);x+=c.measureText(l).width;F(400,fs);if(dr)c.fillText(v,x,y);x+=c.measureText(v).width})}
+   else{const[l,v]=r.s[0];F(600,fs);const lw=c.measureText(l).width;if(dr)c.fillText(l,M,y);F(400,fs);wrapF(c,v,SW-2*M-lw,SW-2*M).forEach((t,i)=>{if(i)y+=LH;if(dr)c.fillText(t,i?M:M+lw,y)})}});
+  y+=fs*.95;ds(y);
+  G.forEach(([lb,d])=>{y+=fs*1.75;F(700,fs*1.2);if(dr)c.fillText(lb+':',M,y);F(700,fs*1.2);wrapF(c,pts(d),SW-2*M-90*k,SW-2*M-90*k).forEach(t=>{y+=fs*1.65;if(dr)c.fillText(t,M+90*k,y)})});return y};
+ let fs=62*k;c.fillStyle='#fff';c.fillRect(0,0,SW,SH);c.fillStyle='#000';c.strokeStyle='#000';c.textBaseline='alphabetic';
+ while(fs>20&&lay(fs,false)>SH-190*k)fs-=1;
+ F(700,84*k,SERIF);c.fillText('Pharmacist note',M,185*k);c.lineWidth=7*k;c.beginPath();c.moveTo(M,232*k-8*k);c.lineTo(SW-M,232*k-8*k);c.stroke();
+ lay(fs,true);c.setLineDash([22*k,16*k]);c.lineWidth=5*k;c.beginPath();c.moveTo(M,SH-150*k);c.lineTo(SW-M,SH-150*k);c.stroke();c.setLineDash([]);
+ F(700,fs*.85);c.textAlign='center';c.fillText('เรียนแพทย์เพื่อพิจารณา ขอบคุณค่ะ/ครับ',SW/2,SH-50*k);c.textAlign='left'}
+function stkTab(I){const cv=g('stk2'),c=cv.getContext('2d');cv.width=SW;cv.height=SH;const k=SW/2048,M=92*k,F=(w,s,f)=>c.font=`${w} ${s}px ${f||SANS}`;
+ c.fillStyle='#fff';c.fillRect(0,0,SW,SH);c.fillStyle='#000';c.strokeStyle='#000';F(700,76*k);c.fillText('ตารางการกินยา Warfarin',M,185*k);c.lineWidth=7*k;c.beginPath();c.moveTo(M,224*k);c.lineTo(SW-M,224*k);c.stroke();
+ const fs=50*k;let x=M;[['HN: ',I.hn||'-'],['     วันที่: ',I.date],['     เป้าหมาย INR: ',I.tg]].forEach(([l,v])=>{F(600,fs);c.fillText(l,x,320*k);x+=c.measureText(l).width;F(400,fs);c.fillText(v,x,320*k);x+=c.measureText(v).width});
+ F(600,fs);c.fillText('ขนาดยารวม: ',M,400*k);x=M+c.measureText('ขนาดยารวม: ').width;F(400,fs);c.fillText(`${fr(I.nw)} มก./สัปดาห์`,x,400*k);
+ const ty=450*k,cw=(SW-2*M)/7,r=cw*.2,mr=Math.max(...[0,1,2,3,4,5,6].map(w=>Math.ceil(pieces(dd(I.X,w)).length/2))),th_=SH-ty-210*k,bh=(mr-1)*r*2.45+2*r,p0=ty+110*k+((th_-220*k)-bh)/2+r;
+ for(let w=0;w<7;w++){const x0=M+w*cw,d=dd(I.X,w),cx=x0+cw/2;c.fillStyle=I.X.odd.includes(w)?'#fff3d6':'#e6f9f6';c.fillRect(x0+4,ty,cw-8,th_);c.strokeStyle='#999';c.lineWidth=3*k;c.strokeRect(x0+4,ty,cw-8,th_);
+  c.fillStyle='#000';c.textAlign='center';F(700,52*k);c.fillText(DN[w].replace('พฤหัสบดี','พฤหัส'),cx,ty+75*k);
+  const P=pieces(d),n=P.length;P.forEach((p,i)=>{const px=n==1?cx:cx+(i%2?1:-1)*r*1.25,py=p0+Math.floor(i/2)*r*2.45;c.beginPath();c.arc(px,py,r,0,7);c.strokeStyle='#9bb';c.lineWidth=3*k;c.stroke();c.beginPath();if(p[1]<1)c.moveTo(px,py);c.arc(px,py,r,-Math.PI/2,-Math.PI/2+p[1]*2*Math.PI);c.closePath();c.fillStyle=COL[p[0]];c.fill();c.strokeStyle='#333';c.lineWidth=4*k;c.stroke()});
+  c.fillStyle='#000';F(700,50*k);c.fillText(fr(d)+' มก.',cx,ty+th_-30*k)}
+ c.textAlign='left';F(600,42*k);const ly=SH-110*k;[[3,M],[5,M+300*k]].forEach(([m,x])=>{c.beginPath();c.arc(x+22*k,ly-14*k,22*k,0,7);c.fillStyle=COL[m];c.fill();c.strokeStyle='#333';c.lineWidth=3*k;c.stroke();c.fillStyle='#000';c.fillText(m+' มก.',x+60*k,ly)});
+ c.textAlign='center';F(700,fs);c.fillText('รับประทานก่อนนอน',SW/2,SH-35*k);c.textAlign='left'}
+const popup=h=>{const w=open('');w.document.write(h);w.document.close()},withM=id=>{const m=+g('mg').value;if(!m)return g(id).toDataURL('image/png');const sc=(70-2*m)/70,c=document.createElement('canvas');c.width=SW;c.height=SH;const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,SW,SH);x.drawImage(g(id),SW*(1-sc)/2,SH*(1-sc)/2,SW*sc,SH*sc);return c.toDataURL('image/png')},IMG=id=>`<img src="${withM(id)}">`,PS='<style>@page{size:90mm 70mm;margin:0}body{margin:0}img{width:90mm;height:70mm;display:block;page-break-after:always}</style>';
+const pimg=ids=>popup(PS+ids.map(IMG).join('')+'<script>onload=()=>setTimeout(print,400)<\/script>');
+g('ps').onclick=()=>pimg(['stk']);g('ps2').onclick=()=>pimg(['stk2']);g('ps3').onclick=()=>pimg(['stk','stk2']);
+const dlf=(id,n)=>{const a=document.createElement('a');a.href=withM(id);a.download=`pharmacist-${n}-${S.I.hn||'label'}.png`;a.click()};
+g('dl').onclick=()=>dlf('stk','note');g('dl2').onclick=()=>dlf('stk2','table');
+g('cp').onclick=()=>{navigator.clipboard.writeText(ntxt());g('cp').textContent='คัดลอกแล้ว ✓';setTimeout(()=>g('cp').textContent='คัดลอก',1500)};
+g('go').onclick=()=>{if(!g('inr').value||!g('od').value){alert('กรอก INR ปัจจุบัน และขนาดยาเดิม');return}S.calc=true;S.manual=false;const t=new Date();S.start=new Date(t.getFullYear(),t.getMonth(),t.getDate());g('sd').textContent='เริ่มนับจากวันที่ '+th(S.start);g('ap').value=ymd(add(S.start,28));g('R').classList.add('on');render()};
+['od','inr','tg','sl','na','bl'].forEach(i=>g(i).addEventListener('input',()=>{S.manual=false;render()}));
+['nd'].forEach(i=>g(i).addEventListener('input',()=>{S.manual=true;render()}));
+['c3','c5','h','q','ap','nx','hn'].concat(FC.flatMap(f=>['d_'+f[0],'x_'+f[0],'r_'+f[0]])).forEach(i=>g(i).addEventListener('input',render));
+document.querySelectorAll('#nr input[type=checkbox]').forEach(x=>x.addEventListener('input',render));
+/* records */
+const recs=()=>LS('wf_rec')||[],U=()=>localStorage.getItem('wf_url')||'';
+const post=o=>{if(U())fetch(U(),{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)}).catch(()=>{})};
+g('sv').onclick=()=>{const I=S.I;if(!I.hn){alert('กรอก HN ก่อนบันทึก');return}const id=I.hn+'_'+Date.now(),o={id,date:ymd(I.start),hn:I.hn,target:g('tg').value,inr:+I.inr,rec:I.rec,old:I.old,newDose:I.nw,na:I.na,reason:I.na?nrs():'',factors:FC.map(f=>({k:f[0],l:f[1],t:g('x_'+f[0]).value.trim(),d:g('r_'+f[0]).value})).filter(f=>f.t),sig:I.sig.join(' / ')};
+ LS('wf_rec',recs().concat(o));post({type:'rec',key:id,data:o});banner();g('sv').textContent='บันทึกแล้ว ✓';setTimeout(()=>g('sv').textContent='บันทึกผู้ป่วย',1500)};
+const rng=r=>r.target=='h'?[2.5,3.5]:[2,3],st=r=>{const [a,b]=rng(r);return r.inr<a?'l':r.inr>b?'h':'n'};
+let ch1,ch2;
+function hist(){const q=g('fh').value.trim(),all=recs().filter(r=>!q||r.hn==q).sort((a,b)=>a.date<b.date?1:-1);
+ g('ht').innerHTML='<tr><th>วันที่</th><th>HN</th><th>INR</th><th>คำแนะนำ</th><th>ขนาดยา (เดิม→ใหม่)</th><th>สูตร</th></tr>'+all.map(r=>`<tr><td>${th(pd(r.date))}</td><td>${r.hn}</td><td style="color:${st(r)=='n'?'#0a8':'#e44'};font-weight:600">${r.inr}</td><td>${r.rec}</td><td>${r.old}→${fr(r.newDose)}</td><td>${r.sig||''}</td></tr>`).join('');
+ if(ch1)ch1.destroy();const a=[...all].reverse();if(!q||!a.length)return;const [lo,hi]=rng(a[a.length-1]);
+ ch1=new Chart(g('hc'),{type:'line',data:{labels:a.map(r=>th(pd(r.date))),datasets:[{label:'INR',data:a.map(r=>r.inr),borderColor:'#3b82f6',backgroundColor:'#3b82f6',tension:.25},{label:'เป้าต่ำ',data:a.map(()=>lo),borderColor:'#0fb5a6',borderDash:[6,4],pointRadius:0},{label:'เป้าสูง',data:a.map(()=>hi),borderColor:'#ff6b6b',borderDash:[6,4],pointRadius:0}]},options:{maintainAspectRatio:false}})}
+g('fh').addEventListener('input',hist);
+const days=()=>LS('wf_day')||{};g('wk').value=g('sdd').value=ymd(new Date());g('sdt').value=days()[g('sdd').value]??'';
+function prange(){const d=pd(g('wk').value),p=g('pm').value;let a,b;if(p=='w'){a=mon(d);b=add(a,6)}else if(p=='m'){a=new Date(d.getFullYear(),d.getMonth(),1);b=new Date(d.getFullYear(),d.getMonth()+1,0)}else{a=new Date(d.getFullYear(),0,1);b=new Date(d.getFullYear(),11,31)}return[a,b,p]}
+function dash(){const[a,b,p]=prange(),A=ymd(a),B=ymd(b),L=recs().filter(r=>r.date>=A&&r.date<=B),D=days();let tot=0,nd=0;Object.keys(D).forEach(k=>{if(k>=A&&k<=B){tot+=+D[k];nd++}});
+ const c={n:0,l:0,h:0};L.forEach(r=>c[st(r)]++);const ab=c.l+c.h,nor=Math.max(tot-ab,0);g('pr').textContent=th(a)+' – '+th(b);
+ g('kp').innerHTML=[['ผู้ป่วยทั้งหมด',nd?tot:'–'],['INR ผิดปกติ',ab],['ต่ำกว่าเป้า',c.l],['สูงกว่าเป้า',c.h],['อยู่ในช่วงเป้าหมาย',nd?nor:'–'],['% ในช่วง',tot?Math.round(nor/tot*100)+'%':'–']].map(x=>`<div><b>${x[1]}</b>${x[0]}</div>`).join('');
+ const lb=[],lo=[],hi=[];if(p=='y')for(let m=0;m<12;m++){lb.push(TM[m].slice(0,3));const R=L.filter(r=>+r.date.slice(5,7)==m+1);lo.push(R.filter(r=>st(r)=='l').length);hi.push(R.filter(r=>st(r)=='h').length)}
+ else for(let d=new Date(a);d<=b;d=add(d,1)){const k=ymd(d),R=L.filter(r=>r.date==k);lb.push(d.getDate());lo.push(R.filter(r=>st(r)=='l').length);hi.push(R.filter(r=>st(r)=='h').length)}
+ if(ch2)ch2.destroy();ch2=new Chart(g('wc'),{type:'bar',data:{labels:lb,datasets:[{label:'ต่ำกว่าเป้า',data:lo,backgroundColor:'#ffb703'},{label:'สูงกว่าเป้า',data:hi,backgroundColor:'#ff6b6b'}]},options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,ticks:{precision:0}}}}});
+ const cs=k=>{const o={},add1=n=>o[n]=(o[n]||0)+1;L.filter(r=>st(r)==k).forEach(r=>{(r.factors||[]).forEach(f=>add1(f.l+': '+f.t));if(r.na&&r.reason)add1('ยังไม่ปรับยา: '+r.reason)});const e=Object.entries(o).sort((a,b)=>b[1]-a[1]).slice(0,10);return e.length?e.map(x=>`<tr><td>${x[0]}</td><td><b>${x[1]}</b></td></tr>`).join(''):'<tr><td>ยังไม่มีข้อมูล</td></tr>'};
+ g('cl').innerHTML=cs('l');g('ch').innerHTML=cs('h')}
+g('wk').addEventListener('input',dash);g('pm').addEventListener('input',dash);g('sdd').addEventListener('input',()=>g('sdt').value=days()[g('sdd').value]??'');
+function saveDay(k,v){if(v===''||isNaN(+v))return;const D=days();D[k]=+v;LS('wf_day',D);post({type:'day',key:k,data:{date:k,total:+v}});dash();banner()}
+g('sds').onclick=()=>saveDay(g('sdd').value,g('sdt').value);
+let bdis='';function banner(){const n=new Date(),t=ymd(n);g('bn').style.display=(n.getHours()*60+n.getMinutes()>=930&&recs().some(r=>r.date==t)&&days()[t]===undefined&&bdis!=t)?'block':'none'}
+g('bs').onclick=()=>saveDay(ymd(new Date()),g('bt').value);g('bx').onclick=()=>{bdis=ymd(new Date());banner()};setInterval(banner,30000);
+g('url').value=U();banner();g('su').onclick=()=>{localStorage.setItem('wf_url',g('url').value.trim());g('su').textContent='บันทึกแล้ว ✓'};
+g('pl').onclick=async()=>{try{const j=await(await fetch(U())).json(),m={};recs().concat(j.records).forEach(r=>m[r.id]=r);LS('wf_rec',Object.values(m));const D=days();(j.days||[]).forEach(w=>D[w.date]=w.total);LS('wf_day',D);g('pl').textContent='ดึงข้อมูลแล้ว ✓ ('+Object.keys(m).length+' รายการ)'}catch(e){alert('ดึงข้อมูลไม่สำเร็จ ตรวจสอบ URL / การ deploy')}};
+g('cg').onclick=()=>navigator.clipboard.writeText(g('gs').innerText);
+</script></body></html>
